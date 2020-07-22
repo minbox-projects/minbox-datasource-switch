@@ -4,23 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>oss-parent</artifactId>
         <groupId>org.minbox.framework</groupId>
-        <version>0.2.0.RELEASE</version>
-        <relativePath>../oss-parent</relativePath>
+        <artifactId>minbox-parent</artifactId>
+        <version>1.0.0.RELEASE</version>
+        <relativePath/>
     </parent>
     <groupId>org.minbox.framework</groupId>
     <artifactId>minbox-datasource-switch</artifactId>
+    <name>MinBox DataSource Switch</name>
     <version>1.0.0.RELEASE</version>
-
     <properties>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <jdk.version>1.8</jdk.version>
-        <spring.version>5.2.7.RELEASE</spring.version>
-        <spring-boot.version>2.3.1.RELEASE</spring-boot.version>
-        <lombok.version>1.18.12</lombok.version>
-        <druid.version>1.1.21</druid.version>
-        <HikariCP.version>3.4.5</HikariCP.version>
     </properties>
     <description>
         Implementation of multiple data sources
@@ -45,44 +39,37 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>${spring.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>${spring.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
-            <version>${spring-boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
-            <version>${spring-boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>compile</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>${HikariCP.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
-            <version>${druid.version}</version>
             <optional>true</optional>
         </dependency>
     </dependencies>
@@ -91,7 +78,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
