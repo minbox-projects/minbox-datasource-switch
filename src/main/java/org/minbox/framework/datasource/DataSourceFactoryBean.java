@@ -1,6 +1,7 @@
 package org.minbox.framework.datasource;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.minbox.framework.datasource.config.DataSourceConfig;
 import org.minbox.framework.datasource.config.DataSourceDruidConfig;
 import org.minbox.framework.datasource.config.DataSourceHikariConfig;
@@ -15,6 +16,7 @@ import javax.sql.DataSource;
  *
  * @author 恒宇少年
  */
+@Slf4j
 public class DataSourceFactoryBean {
     /**
      * create new dataSource instance
@@ -29,10 +31,12 @@ public class DataSourceFactoryBean {
             // use druid data source
             if (checkUseAppointDataSource(DataSourceTypeNames.DRUID)) {
                 dataSource = new MinBoxDruidDataSource((DataSourceDruidConfig) config);
+                log.info("Initializing [{}] Druid Datasource Successfully.", config.getPoolName());
             }
             // use Hikari data source
             else if (checkUseAppointDataSource(DataSourceTypeNames.HIKARI)) {
                 dataSource = new MinBoxHikariDataSource((DataSourceHikariConfig) config);
+                log.info("Initialize [{}] Hikari Datasource Successfully.", config.getPoolName());
             }
         }
         // if setting data source type class name
@@ -40,15 +44,18 @@ public class DataSourceFactoryBean {
             // druid data source
             if (DataSourceTypeNames.DRUID.equals(config.getDataSourceType().getName())) {
                 dataSource = new MinBoxDruidDataSource((DataSourceDruidConfig) config);
+                log.info("Initializing [{}] Druid Datasource Successfully.", config.getPoolName());
             }
             // Hikari data source
             else if (DataSourceTypeNames.HIKARI.equals(config.getDataSourceType().getName())) {
                 dataSource = new MinBoxHikariDataSource((DataSourceHikariConfig) config);
+                log.info("Initialize [{}] Hikari Datasource Successfully.", config.getPoolName());
             }
         }
         // use default basic data source
         if (dataSource == null) {
             dataSource = new MinBoxBasicDataSource(config);
+            log.info("Unsupported data source type, use the default MinBoxBasicDataSource.");
         }
         return dataSource;
     }

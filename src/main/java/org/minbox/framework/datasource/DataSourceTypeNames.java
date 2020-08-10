@@ -11,11 +11,11 @@ public interface DataSourceTypeNames {
      *
      * @see com.alibaba.druid.pool.DruidDataSource
      */
-    String DRUID = "com.alibaba.druid.pool.DruidDataSource";
+    String DRUID = "org.minbox.framework.datasource.support.MinBoxDruidDataSource";
     /**
      * The Hikari Class Name
      *
      * @see com.zaxxer.hikari.HikariDataSource
      */
-    String HIKARI = "com.zaxxer.hikari.HikariDataSource";
+    String HIKARI = "org.minbox.framework.datasource.support.MinBoxHikariDataSource";
 }
