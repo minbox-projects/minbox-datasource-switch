@@ -1,9 +1,8 @@
 package org.minbox.framework.datasource.routing;
 
+import lombok.extern.slf4j.Slf4j;
 import org.minbox.framework.datasource.DataSourceFactoryBean;
 import org.minbox.framework.datasource.config.DataSourceConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
@@ -22,12 +21,8 @@ import java.util.Map;
  *
  * @author 恒宇少年
  */
+@Slf4j
 public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implements InitializingBean, DisposableBean {
-    /**
-     * logger instance
-     */
-    static Logger logger = LoggerFactory.getLogger(ApiBootRoutingDataSource.class);
-
     /**
      * datasource factory bean
      */
@@ -96,7 +91,6 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
 
             // cache ti set target datasource
             targetDataSources.put(config.getPoolName(), dataSource);
-            logger.info("【ApiBoot DataSource Switch】Execute create datasource [{}] instance.", config.getPoolName());
         });
 
         // set target datasource's
@@ -125,7 +119,7 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
                 Method closeMethod = clazz.getDeclaredMethod("close");
                 if (closeMethod != null) {
                     closeMethod.invoke(dataSource);
-                    logger.info("【ApiBoot DataSource Switch】Execute close datasource [{}]", poolName);
+                    log.info("Execute closing datasource [{}]", poolName);
                 }
             } catch (Exception e) {
                 // ignore
