@@ -6,13 +6,13 @@
     <parent>
         <groupId>org.minbox.framework</groupId>
         <artifactId>minbox-parent</artifactId>
-        <version>1.0.3.RELEASE</version>
+        <version>1.0.4-SNAPSHOT</version>
         <relativePath/>
     </parent>
     <groupId>org.minbox.framework</groupId>
     <artifactId>minbox-datasource-switch</artifactId>
     <name>MinBox DataSource Switch</name>
-    <version>1.0.1.RELEASE</version>
+    <version>1.0.2-SNAPSHOT</version>
     <properties>
         <jdk.version>1.8</jdk.version>
     </properties>
