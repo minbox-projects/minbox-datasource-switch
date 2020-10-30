@@ -26,6 +26,7 @@ public class MinBoxHikariDataSource extends HikariDataSource implements MinBoxDa
             this.setMaximumPoolSize(config.getMaxPoolSize());
             this.setMaxLifetime(config.getMaxLifetime());
             this.setConnectionTestQuery(config.getConnectionTestQuery());
+            this.setPoolName(config.getPoolName());
             config.getProperty().keySet().stream().forEach(param -> this.addDataSourceProperty(param, config.getProperty().get(param)));
         } catch (Exception e) {
             throw new DataSourceSwitchException("Create new Hikari dataSource fail.", e);
