@@ -6,15 +6,16 @@
     <parent>
         <groupId>org.minbox.framework</groupId>
         <artifactId>minbox-parent</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
+        <version>1.0.4</version>
         <relativePath/>
     </parent>
     <groupId>org.minbox.framework</groupId>
     <artifactId>minbox-datasource-switch</artifactId>
     <name>MinBox DataSource Switch</name>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <properties>
         <jdk.version>1.8</jdk.version>
+        <minbox-bom.version>1.0.4</minbox-bom.version>
     </properties>
     <description>
         Implementation of multiple data sources
@@ -47,8 +48,8 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -73,6 +74,17 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.minbox.framework</groupId>
+                <artifactId>minbox-bom</artifactId>
+                <version>${minbox-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <plugins>
             <plugin>
