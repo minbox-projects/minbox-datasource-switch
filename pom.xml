@@ -6,16 +6,16 @@
     <parent>
         <groupId>org.minbox.framework</groupId>
         <artifactId>minbox-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.1.0</version>
         <relativePath/>
     </parent>
     <groupId>org.minbox.framework</groupId>
     <artifactId>minbox-datasource-switch</artifactId>
     <name>MinBox DataSource Switch</name>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <properties>
         <jdk.version>1.8</jdk.version>
-        <minbox-bom.version>1.0.4</minbox-bom.version>
+        <minbox-bom.version>1.1.0</minbox-bom.version>
     </properties>
     <description>
         Implementation of multiple data sources
