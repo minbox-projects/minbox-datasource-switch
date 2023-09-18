@@ -14,7 +14,7 @@ public class DataSourceContextHolder {
     /**
      * current thread data source pool name
      */
-    private static ThreadLocal<Deque<String>> DATA_SOURCE_POOL_NAME = new ThreadLocal() {
+    private static final ThreadLocal<Deque<String>> DATA_SOURCE_POOL_NAME = new ThreadLocal() {
         @Override
         protected Object initialValue() {
             return new ArrayDeque();

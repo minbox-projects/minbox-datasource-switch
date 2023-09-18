@@ -3,26 +3,26 @@ package org.minbox.framework.datasource.routing;
 import lombok.extern.slf4j.Slf4j;
 import org.minbox.framework.datasource.DataSourceFactoryBean;
 import org.minbox.framework.datasource.config.DataSourceConfig;
+import org.minbox.framework.datasource.routing.customizer.DataSourceSelectionCustomizer;
+import org.minbox.framework.datasource.routing.customizer.DefaultDataSourceSelectionCustomizer;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * ApiBoot DataSource Routing
+ * MinBox Switch DataSource Routing
  *
  * @author 恒宇少年
  */
 @Slf4j
-public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implements InitializingBean, DisposableBean {
+public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource implements InitializingBean, DisposableBean {
     /**
      * datasource factory bean
      */
@@ -41,11 +41,20 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
      * value is dataSource instance
      */
     private Map<String, DataSource> dataSourceMap = new LinkedHashMap<>();
+    /**
+     * 自定义数据源选择器
+     */
+    private DataSourceSelectionCustomizer selectionCustomizer;
 
-    public ApiBootRoutingDataSource(DataSourceFactoryBean factoryBean, String primaryPoolName, List<DataSourceConfig> configs) {
+    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, String primaryPoolName, List<DataSourceConfig> configs) {
+        this(factoryBean, primaryPoolName, configs, new DefaultDataSourceSelectionCustomizer());
+    }
+
+    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, String primaryPoolName, List<DataSourceConfig> configs, DataSourceSelectionCustomizer selectionCustomizer) {
         this.factoryBean = factoryBean;
-        this.primaryPoolName = primaryPoolName;
         this.configs = configs;
+        this.primaryPoolName = primaryPoolName;
+        this.selectionCustomizer = selectionCustomizer == null ? new DefaultDataSourceSelectionCustomizer() : selectionCustomizer;
     }
 
     /**
@@ -56,7 +65,12 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
     @Override
     protected Object determineCurrentLookupKey() {
         String poolName = DataSourceContextHolder.get();
-        return StringUtils.isEmpty(poolName) ? primaryPoolName : poolName;
+        if (ObjectUtils.isEmpty(poolName)) {
+            poolName = primaryPoolName;
+        }
+        Set<String> poolNameSet = configs.stream().map(DataSourceConfig::getPoolName).collect(Collectors.toSet());
+        poolName = selectionCustomizer.customize(poolName, poolNameSet);
+        return ObjectUtils.isEmpty(poolName) ? primaryPoolName : poolName;
     }
 
     /**
@@ -83,7 +97,7 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
         Map<Object, Object> targetDataSources = new HashMap(1);
 
         // Instantiate all data source configurations
-        configs.stream().forEach(config -> {
+        configs.forEach(config -> {
             // new datasource instance
             DataSource dataSource = factoryBean.newDataSource(config);
             // cache datasource to map
@@ -110,7 +124,7 @@ public class ApiBootRoutingDataSource extends AbstractRoutingDataSource implemen
      */
     @Override
     public void destroy() throws Exception {
-        dataSourceMap.keySet().stream().forEach(poolName -> {
+        dataSourceMap.keySet().forEach(poolName -> {
             try {
                 DataSource dataSource = dataSourceMap.get(poolName);
                 Class<? extends DataSource> clazz = dataSource.getClass();
