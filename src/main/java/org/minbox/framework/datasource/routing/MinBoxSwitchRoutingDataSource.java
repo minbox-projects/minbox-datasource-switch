@@ -3,8 +3,9 @@ package org.minbox.framework.datasource.routing;
 import lombok.extern.slf4j.Slf4j;
 import org.minbox.framework.datasource.DataSourceFactoryBean;
 import org.minbox.framework.datasource.config.DataSourceConfig;
-import org.minbox.framework.datasource.routing.customizer.DataSourceSelectionCustomizer;
-import org.minbox.framework.datasource.routing.customizer.DefaultDataSourceSelectionCustomizer;
+import org.minbox.framework.datasource.environment.DataSourceSwitchEnvironment;
+import org.minbox.framework.datasource.environment.customizer.DataSourceEnvironmentSelectionCustomizer;
+import org.minbox.framework.datasource.environment.customizer.DefaultDataSourceEnvironmentSelectionCustomizer;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
@@ -24,37 +25,40 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource implements InitializingBean, DisposableBean {
     /**
-     * datasource factory bean
+     * environment@poolName
      */
+    private static final String POOL_NAME_FORMAT = "%s@%s";
     private DataSourceFactoryBean factoryBean;
-    /**
-     * all datasource config
-     */
-    private List<DataSourceConfig> configs;
-    /**
-     * primary pool name
-     */
-    private String primaryPoolName;
-    /**
-     * cache all data source
-     * key is dataSource pool name
-     * value is dataSource instance
-     */
+    private String activeEnvironment;
+    private DataSourceEnvironmentSelectionCustomizer environmentSelectionCustomizer;
+    private List<DataSourceSwitchEnvironment> dataSourceSwitchEnvironments;
     private Map<String, DataSource> dataSourceMap = new LinkedHashMap<>();
-    /**
-     * 自定义数据源选择器
-     */
-    private DataSourceSelectionCustomizer selectionCustomizer;
+    private Set<String> environmentNameSet;
+    private String primaryPoolName;
+    private String formattedPrimaryPoolName;
 
-    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, String primaryPoolName, List<DataSourceConfig> configs) {
-        this(factoryBean, primaryPoolName, configs, new DefaultDataSourceSelectionCustomizer());
+    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, String activeEnvironment, List<DataSourceSwitchEnvironment> environments) {
+        this(factoryBean, new DefaultDataSourceEnvironmentSelectionCustomizer(), activeEnvironment, environments);
     }
 
-    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, String primaryPoolName, List<DataSourceConfig> configs, DataSourceSelectionCustomizer selectionCustomizer) {
+    public MinBoxSwitchRoutingDataSource(DataSourceFactoryBean factoryBean, DataSourceEnvironmentSelectionCustomizer environmentSelectionCustomizer,
+                                         String activeEnvironment, List<DataSourceSwitchEnvironment> environments) {
+        Assert.hasLength(activeEnvironment, "Active environment cannot be empty.");
+        Assert.notEmpty(environments, "DataSource switch environment list cannot be null.");
         this.factoryBean = factoryBean;
-        this.configs = configs;
-        this.primaryPoolName = primaryPoolName;
-        this.selectionCustomizer = selectionCustomizer == null ? new DefaultDataSourceSelectionCustomizer() : selectionCustomizer;
+        this.environmentSelectionCustomizer = environmentSelectionCustomizer == null ? new DefaultDataSourceEnvironmentSelectionCustomizer() : environmentSelectionCustomizer;
+        this.activeEnvironment = activeEnvironment;
+        this.dataSourceSwitchEnvironments = environments;
+        // @formatter:off
+        DataSourceSwitchEnvironment activeSwitchProfile = dataSourceSwitchEnvironments.stream()
+                .filter(switchProfile -> activeEnvironment.equals(switchProfile.getEnvironment()))
+                .findFirst()
+                .orElse(null);
+        // @formatter:on
+        Assert.notNull(activeSwitchProfile, "Active environment not find in datasource switch environment list.");
+        this.primaryPoolName = activeSwitchProfile.getPrimaryPoolName();
+        this.formattedPrimaryPoolName = String.format(POOL_NAME_FORMAT, this.activeEnvironment, this.primaryPoolName);
+        this.environmentNameSet = dataSourceSwitchEnvironments.stream().map(DataSourceSwitchEnvironment::getEnvironment).collect(Collectors.toSet());
     }
 
     /**
@@ -64,22 +68,18 @@ public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource imp
      */
     @Override
     protected Object determineCurrentLookupKey() {
-        String poolName = DataSourceContextHolder.get();
-        if (ObjectUtils.isEmpty(poolName)) {
-            poolName = primaryPoolName;
+        String currentPoolName = DataSourceContextHolder.get();
+        if (ObjectUtils.isEmpty(currentPoolName)) {
+            // use active environment default primary pool name
+            return this.formattedPrimaryPoolName;
         }
-        Set<String> poolNameSet = configs.stream().map(DataSourceConfig::getPoolName).collect(Collectors.toSet());
-        poolName = selectionCustomizer.customize(poolName, poolNameSet);
-        return ObjectUtils.isEmpty(poolName) ? primaryPoolName : poolName;
-    }
-
-    /**
-     * get primary data source instance
-     *
-     * @return dataSource
-     */
-    private DataSource getPrimaryDataSource() {
-        return dataSourceMap.get(primaryPoolName);
+        String currentProfile = this.environmentSelectionCustomizer.customize(this.activeEnvironment, this.environmentNameSet);
+        if (ObjectUtils.isEmpty(currentProfile) || !this.environmentNameSet.contains(currentProfile)) {
+            currentProfile = this.activeEnvironment;
+            log.error("Selection environment [{}] not in set, use default active environment.", currentProfile);
+        }
+        // return after format pool name
+        return String.format(POOL_NAME_FORMAT, currentProfile, currentPoolName);
     }
 
     /**
@@ -91,27 +91,19 @@ public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource imp
      */
     @Override
     public void afterPropertiesSet() {
-        // config is required.
-        Assert.notNull(configs, "DataSource config is required.");
-
-        Map<Object, Object> targetDataSources = new HashMap(1);
-
-        // Instantiate all data source configurations
-        configs.forEach(config -> {
-            // new datasource instance
-            DataSource dataSource = factoryBean.newDataSource(config);
-            // cache datasource to map
-            dataSourceMap.put(config.getPoolName(), dataSource);
-
-            // cache ti set target datasource
-            targetDataSources.put(config.getPoolName(), dataSource);
-        });
-
+        Map<Object, Object> targetDataSources = new HashMap<>();
+        dataSourceSwitchEnvironments.forEach(switchProfile -> switchProfile.getConfigs().forEach(dataSourceConfig -> {
+            DataSource dataSource = factoryBean.newDataSource(dataSourceConfig);
+            // format datasource pool name with environment
+            String poolName = String.format(POOL_NAME_FORMAT, switchProfile.getEnvironment(), dataSourceConfig.getPoolName());
+            dataSourceMap.put(poolName, dataSource);
+            targetDataSources.put(poolName, dataSource);
+        }));
         // set target datasource's
         this.setTargetDataSources(targetDataSources);
-        // set default data source
-        this.setDefaultTargetDataSource(getPrimaryDataSource());
-
+        // set active environment default data source
+        this.setDefaultTargetDataSource(this.dataSourceMap.get(this.formattedPrimaryPoolName));
+        log.info("DataSourceSwitch initialization successful, default pool name is [{}]", this.formattedPrimaryPoolName);
         // call parent afterProperties method
         super.afterPropertiesSet();
     }
