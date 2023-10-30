@@ -11,6 +11,8 @@ import org.minbox.framework.datasource.support.MinBoxHikariDataSource;
 
 import javax.sql.DataSource;
 
+import static org.minbox.framework.datasource.routing.MinBoxSwitchRoutingDataSource.POOL_NAME_FORMAT;
+
 /**
  * {@link DataSource} Factory Class
  *
@@ -21,22 +23,24 @@ public class DataSourceFactoryBean {
     /**
      * create new dataSource instance
      *
+     * @param environment 数据环境
      * @param config {@link DataSourceConfig}
      * @return {@link DataSource} the new instance
      */
-    public DataSource newDataSource(DataSourceConfig config) {
+    public DataSource newDataSource(String environment, DataSourceConfig config) {
         DataSource dataSource = null;
+        String formattedPoolName = String.format(POOL_NAME_FORMAT, environment, config.getPoolName());
         // if not setting data source type class name
         if (config.getDataSourceType() == null) {
             // use druid data source
             if (checkUseAppointDataSource(DataSourceTypeNames.DRUID)) {
                 dataSource = new MinBoxDruidDataSource((DataSourceDruidConfig) config);
-                log.info("Initializing [{}] Druid Datasource Successfully.", config.getPoolName());
+                log.info("Initializing [{}] Druid Datasource Successfully.", formattedPoolName);
             }
             // use Hikari data source
             else if (checkUseAppointDataSource(DataSourceTypeNames.HIKARI)) {
                 dataSource = new MinBoxHikariDataSource((DataSourceHikariConfig) config);
-                log.info("Initialize [{}] Hikari Datasource Successfully.", config.getPoolName());
+                log.info("Initialize [{}] Hikari Datasource Successfully.", formattedPoolName);
             }
         }
         // if setting data source type class name
@@ -44,12 +48,12 @@ public class DataSourceFactoryBean {
             // druid data source
             if (DataSourceTypeNames.DRUID.equals(config.getDataSourceType().getName())) {
                 dataSource = new MinBoxDruidDataSource((DataSourceDruidConfig) config);
-                log.info("Initializing [{}] Druid Datasource Successfully.", config.getPoolName());
+                log.info("Initializing [{}] Druid Datasource Successfully.", formattedPoolName);
             }
             // Hikari data source
             else if (DataSourceTypeNames.HIKARI.equals(config.getDataSourceType().getName())) {
                 dataSource = new MinBoxHikariDataSource((DataSourceHikariConfig) config);
-                log.info("Initialize [{}] Hikari Datasource Successfully.", config.getPoolName());
+                log.info("Initialize [{}] Hikari Datasource Successfully.", formattedPoolName);
             }
         }
         // use default basic data source

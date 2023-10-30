@@ -27,7 +27,7 @@ public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource imp
     /**
      * environment@poolName
      */
-    private static final String POOL_NAME_FORMAT = "%s@%s";
+    public static final String POOL_NAME_FORMAT = "%s@%s";
     private DataSourceFactoryBean factoryBean;
     private String activeEnvironment;
     private DataSourceEnvironmentSelectionCustomizer environmentSelectionCustomizer;
@@ -93,7 +93,7 @@ public class MinBoxSwitchRoutingDataSource extends AbstractRoutingDataSource imp
     public void afterPropertiesSet() {
         Map<Object, Object> targetDataSources = new HashMap<>();
         dataSourceSwitchEnvironments.forEach(switchProfile -> switchProfile.getConfigs().forEach(dataSourceConfig -> {
-            DataSource dataSource = factoryBean.newDataSource(dataSourceConfig);
+            DataSource dataSource = factoryBean.newDataSource(switchProfile.getEnvironment(), dataSourceConfig);
             // format datasource pool name with environment
             String poolName = String.format(POOL_NAME_FORMAT, switchProfile.getEnvironment(), dataSourceConfig.getPoolName());
             dataSourceMap.put(poolName, dataSource);

@@ -12,7 +12,7 @@
     <groupId>org.minbox.framework</groupId>
     <artifactId>minbox-datasource-switch</artifactId>
     <name>MinBox DataSource Switch</name>
-    <version>1.0.4</version>
+    <version>1.0.5-SNAPSHOT</version>
     <properties>
         <jdk.version>1.8</jdk.version>
         <minbox-bom.version>1.1.0</minbox-bom.version>
